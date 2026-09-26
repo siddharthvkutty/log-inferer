@@ -19,7 +19,7 @@ Name=Log Inferer
 Comment=Diagnose error logs locally with Ollama
 Exec=$PROJECT_DIR/run.sh
 Path=$PROJECT_DIR
-Icon=utilities-terminal
+Icon=$PROJECT_DIR/icon.png
 Terminal=false
 Categories=Utility;Development;
 EOF
