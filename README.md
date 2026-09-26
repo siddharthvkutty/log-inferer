@@ -26,7 +26,15 @@ bash scripts/pull_model.sh
 ./run.sh
 ```
 
-Paste a log into the top pane, or hit **Open File...** to load one from disk, then **Analyze**. The diagnosis streams in below as the model reasons through it.
+Paste a log into the top pane, or hit **Open File...** to load one from disk, then **Analyze**. The diagnosis streams in below as the model reasons through it — **Stop** cancels mid-run, **Copy** puts the diagnosis on your clipboard.
+
+### Desktop launcher (optional)
+
+```bash
+bash scripts/install_launcher.sh
+```
+
+Drops a `.desktop` entry into `~/.local/share/applications/` pointing at this checkout, so "Log Inferer" shows up in your application menu. It uses absolute paths, so nothing needs to be added to `PATH` or `.bashrc`. Re-run it if you move the repo.
 
 ## Project structure
 
@@ -37,7 +45,8 @@ log-inferer/
 ├── test_inferer.py        smoke test
 ├── run.sh                 launches the app
 └── scripts/
-    └── pull_model.sh       installs/starts ollama, pulls the model
+    ├── pull_model.sh        installs/starts ollama, pulls the model
+    └── install_launcher.sh   installs a .desktop application menu entry
 ```
 
 ## How it works
@@ -50,4 +59,4 @@ Defaults to `deepseek-r1:8b` — a reasoning model, so it works through the log 
 
 ## License
 
-No license file yet — add one (MIT is the usual default) before you rely on others being able to reuse this.
+MIT — see [LICENSE](LICENSE).
