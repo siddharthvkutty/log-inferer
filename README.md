@@ -34,7 +34,9 @@ Paste a log into the top pane, or hit **Open File...** to load one from disk, th
 bash scripts/install_launcher.sh
 ```
 
-Drops a `.desktop` entry into `~/.local/share/applications/` pointing at this checkout, so "Log Inferer" shows up in your application menu. It uses absolute paths, so nothing needs to be added to `PATH` or `.bashrc`. Re-run it if you move the repo.
+Drops a `.desktop` entry into `~/.local/share/applications/` pointing at this checkout, so "Log Inferer" shows up in your application menu. It uses absolute paths, so nothing needs to be added to `PATH` or `.bashrc`. Re-run it if you move the repo. Drop an `icon.ico` in the project root for it to pick up as the menu icon — re-run the install script after adding it.
+
+To remove the launcher: `bash scripts/uninstall_launcher.sh`
 
 ## Project structure
 
@@ -45,8 +47,9 @@ log-inferer/
 ├── test_inferer.py        smoke test
 ├── run.sh                 launches the app
 └── scripts/
-    ├── pull_model.sh        installs/starts ollama, pulls the model
-    └── install_launcher.sh   installs a .desktop application menu entry
+    ├── pull_model.sh          installs/starts ollama, pulls the model
+    ├── install_launcher.sh     installs a .desktop application menu entry
+    └── uninstall_launcher.sh   removes it
 ```
 
 ## How it works
