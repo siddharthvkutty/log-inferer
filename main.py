@@ -25,6 +25,8 @@ class LogInfererApp:
         root.configure(bg=BG)
 
         self.queue = queue.Queue()
+        self.running = False
+        self.cancel_event = None
 
         self._build_ui()
         self.root.after(80, self._poll_queue)
@@ -43,6 +45,7 @@ class LogInfererApp:
         self._button(btns, "Open File...", self.browse_file).pack(side="left", padx=4)
         self.analyze_btn = self._button(btns, "Analyze", self.analyze, accent=True)
         self.analyze_btn.pack(side="left", padx=4)
+        self._button(btns, "Copy", self.copy_output).pack(side="left", padx=4)
         self._button(btns, "Clear", self.clear).pack(side="left", padx=4)
 
         body = tk.PanedWindow(self.root, bg=BG, orient="vertical", sashwidth=6,
@@ -103,23 +106,43 @@ class LogInfererApp:
         self.output_text.insert("1.0", text)
         self.output_text.config(state="disabled")
 
+    def copy_output(self):
+        text = self.output_text.get("1.0", "end").strip()
+        if not text:
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.status.config(text="Copied diagnosis to clipboard")
+
     def analyze(self):
+        if self.running:
+            self.cancel_event.set()
+            self.analyze_btn.config(state="disabled")
+            self.status.config(text="Cancelling...")
+            return
+
         log_text = self.input_text.get("1.0", "end").strip()
         if not log_text:
             messagebox.showwarning("Empty log", "Paste a log or open a file first.")
             return
-        self.analyze_btn.config(state="disabled", text="Thinking...")
+        self.running = True
+        self.cancel_event = threading.Event()
+        self.analyze_btn.config(text="Stop")
         self.status.config(text=f"Querying {MODEL} via Ollama...")
         self._set_output("")
 
-        threading.Thread(target=self._run_analysis, args=(log_text,), daemon=True).start()
+        threading.Thread(target=self._run_analysis, args=(log_text, self.cancel_event),
+                          daemon=True).start()
 
-    def _run_analysis(self, log_text):
+    def _run_analysis(self, log_text, cancel_event):
         try:
             def on_token(tok):
                 self.queue.put(("token", tok))
-            analyze_stream(log_text, on_token)
-            self.queue.put(("done", None))
+            analyze_stream(log_text, on_token, cancel_event=cancel_event)
+            if cancel_event.is_set():
+                self.queue.put(("cancelled", None))
+            else:
+                self.queue.put(("done", None))
         except Exception as e:
             self.queue.put(("error", str(e)))
 
@@ -133,9 +156,15 @@ class LogInfererApp:
                     self.output_text.see("end")
                     self.output_text.config(state="disabled")
                 elif kind == "done":
+                    self.running = False
                     self.analyze_btn.config(state="normal", text="Analyze")
                     self.status.config(text="Done")
+                elif kind == "cancelled":
+                    self.running = False
+                    self.analyze_btn.config(state="normal", text="Analyze")
+                    self.status.config(text="Cancelled")
                 elif kind == "error":
+                    self.running = False
                     self.analyze_btn.config(state="normal", text="Analyze")
                     self.status.config(text=f"Error: {payload}")
                     messagebox.showerror("Inference failed", payload)

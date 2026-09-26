@@ -26,8 +26,11 @@ def strip_thinking(text):
     return _THINK_RE.sub("", text).strip()
 
 
-def analyze_stream(log_text, on_token):
-    """Stream a diagnosis for log_text from Ollama, calling on_token(str) per chunk."""
+def analyze_stream(log_text, on_token, cancel_event=None):
+    """Stream a diagnosis for log_text from Ollama, calling on_token(str) per chunk.
+
+    If cancel_event is set mid-stream, the request is dropped and the call returns early.
+    """
     prompt = f"{SYSTEM_PROMPT}\n\n--- LOG ---\n{log_text}\n--- END LOG ---\n"
     payload = json.dumps({"model": MODEL, "prompt": prompt, "stream": True}).encode()
     req = urllib.request.Request(
@@ -36,6 +39,8 @@ def analyze_stream(log_text, on_token):
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             for line in resp:
+                if cancel_event is not None and cancel_event.is_set():
+                    return
                 line = line.strip()
                 if not line:
                     continue
